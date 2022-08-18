@@ -384,7 +384,9 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         value = self.get_value('hostID')
         if not value:
             raise InvalidValueError('Invalid Host ID: {}'.format(value))
-    
+        print("value:",value)
+        return value
+
     def get_port(self):
         value = self.get_argument('port', u'')
         if not value:
@@ -506,7 +508,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         pass
 
     def get(self):
-        self.render('index.html', debug=self.debug, font=self.font)
+       self.render('index.html', debug=self.debug, font=self.font)
 
     @tornado.gen.coroutine
     def post(self):
