@@ -8,13 +8,13 @@ with codecs.open('README.rst', encoding='utf-8') as f:
 
 
 setup(
-    name='webssh',
+    name='dc-webssh',
     version=version,
-    description='Web based ssh client',
+    description='Web based ssh client for DC-bench',
     long_description=long_description,
-    author='Shengdun Hua',
-    author_email='webmaster0115@gmail.com',
-    url='https://github.com/huashengdun/webssh',
+    author='Karthik Kumaar',
+    author_email='karthikkumar.m@gmail.com',
+    url='https://github.com/kkumarM/webssh',
     packages=['webssh'],
     entry_points='''
     [console_scripts]

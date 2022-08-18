@@ -18,7 +18,7 @@ from webssh.utils import (
     is_valid_encoding
 )
 from webssh.worker import Worker, recycle_worker, clients
-
+from webssh.vault import client
 try:
     from json.decoder import JSONDecodeError
 except ImportError:
@@ -163,7 +163,8 @@ class PrivateKey(object):
             raise InvalidValueError('Invalid key {}.'.format(self.filename))
 
         offset = self.iostr.tell() - length
-        password = to_bytes(self.password) if self.password else None
+        #password = to_bytes(self.password) if self.password else None
+        password = "intel123"
         pkey = self.get_specific_pkey(name, offset, password)
 
         if pkey is None and name == 'Ed25519':
@@ -346,19 +347,31 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         ssh.set_missing_host_key_policy(self.policy)
         return ssh
 
+    #def get_privatekey(self):
+    #    name = 'privatekey'
+    #    lst = self.request.files.get(name)
+    #    print("Pkey List:", lst)
+    #    if lst:
+    #        # multipart form
+    #        filename = lst[0]['filename']
+    #        data = lst[0]['body']
+    #        value = self.decode_argument(data, name=name).strip()
+    #    else:
+    #        # urlencoded form
+    #        value = self.get_argument(name, u'')
+    #        filename = ''
+
+    #    return value, filename
+    
     def get_privatekey(self):
         name = 'privatekey'
-        lst = self.request.files.get(name)
-        if lst:
-            # multipart form
-            filename = lst[0]['filename']
-            data = lst[0]['body']
-            value = self.decode_argument(data, name=name).strip()
-        else:
-            # urlencoded form
-            value = self.get_argument(name, u'')
-            filename = ''
-
+        vm_id = self.get_host_id()
+        # get private key from vault
+        response = client.secrets.kv.v2.read_secret_version(mount_point='kv', path='target_node')
+        PEM_KEY = response['data']['data'][vm_id]
+        print(PEM_KEY)
+        value = self.decode_argument(PEM_KEY, name=name).strip()
+        filename = ''
         return value, filename
 
     def get_hostname(self):
@@ -367,6 +380,11 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             raise InvalidValueError('Invalid hostname: {}'.format(value))
         return value
 
+    def get_host_id(self):
+        value = self.get_value('hostID')
+        if not value:
+            raise InvalidValueError('Invalid Host ID: {}'.format(value))
+    
     def get_port(self):
         value = self.get_argument('port', u'')
         if not value:
