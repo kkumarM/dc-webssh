@@ -367,7 +367,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         name = 'privatekey'
         vm_id = self.get_host_id()
         # get private key from vault
-        response = client.secrets.kv.v2.read_secret_version(mount_point='kv', path='target_node')
+        response_key = client.secrets.kv.v2.read_secret_version(mount_point='kv', path='target_node')
         PEM_KEY = response['data']['data'][vm_id]
         print(PEM_KEY)
         value = self.decode_argument(PEM_KEY, name=name).strip()
@@ -385,6 +385,18 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         if not value:
             raise InvalidValueError('Invalid Host ID: {}'.format(value))
         print("value:",value)
+        return value
+
+    def get_jwt_token(self):
+        value = self.get_value('token')
+        if not value:
+            raise InvalidValueError('Invalid Token: {}'.format(value))
+        secret_key = client.secrets.kv.v2.read_secret_version(mount_point='kv', path='jwt')
+        SECRET_KEY = response['data']['data']['token']
+        try:
+            token = jwt.decode(value, SECRET_KEY, algorithms=["HS256"])
+        except:
+            return "Token is Invalid"
         return value
 
     def get_port(self):
@@ -413,6 +425,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
         username = self.get_value('username')
         password = self.get_argument('password', u'')
         privatekey, filename = self.get_privatekey()
+        token = self.get_jwt_token()
         passphrase = self.get_argument('passphrase', u'')
         totp = self.get_argument('totp', u'')
 
@@ -425,7 +438,7 @@ class IndexHandler(MixinHandler, tornado.web.RequestHandler):
             pkey = None
 
         self.ssh_client.totp = totp
-        args = (hostname, port, username, password, pkey)
+        args = (hostname, port, username, password, pkey, token)
         logging.debug(args)
 
         return args
